@@ -21,10 +21,13 @@
         <div class="col-md-10 col-md-offset-1">
             <div class="panel panel-success">
                 <div class="panel-heading">
-                    <h3 class="text-center">欢迎NBA聊天室</h3>
+                    <h3 class="text-center">欢迎NBA聊天室
+                    <button class="btn btn-danger" onclick="joinRoom('red')">常规赛</button>
+                    <button class="btn btn-success" onclick="joinRoom('green')">季后赛</button>
+                    </h3>
                 </div>
                 <div class="panel-body">
-                    <ul class="list-group" id="messages" onclick="selectUser(event)">
+                    <ul class="list-group" id="messages" onclick="handleClick(event)">
 
                     </ul>
                 </div>
@@ -55,20 +58,19 @@
     // 引入socket.io.js文件之后，会在window对象增加一个io的属性
     // 调用io可以连接服务器并返回连接对象
     let socket = io('/'); // new WebSocket('/')
-    socket.on('connect',function () {//监听连接成功事件
-        console.log('连接成功');
-    });
+
     socket.on('connect',function () {
         // 获取所有的消息 message
         socket.emit('getAllMessages');
     });
     function formatMsg(msgObj) {
-        return `<span class="user">${msgObj.username}</span>: ${msgObj.content} <span class="pull-right"> ${new Date(msgObj.createAt).toLocaleString()}</span>`
+        return `<span class="user">${msgObj.username}</span>: ${msgObj.content} <span class="pull-right"> ${new Date(msgObj.createAt).toLocaleString()}</span> <button data-id="${msgObj._id}" class="btn btn-danger btnDelete">X</button>`
     }
     // 客户端监听服务器端的消息
     socket.on('message',function (msgObj) {
         let messagesUl= document.querySelector('#messages');
         let li = document.createElement('li');
+        li.id = msgObj._id;
         li.innerHTML= formatMsg(msgObj);
         li.className='list-group-item';
         messagesUl.appendChild(li);
@@ -81,21 +83,33 @@
         socket.send(content);// 把消息发送给服务器
         contentInput.value = '';
     }
-    function selectUser(event) {
-        if(event.target.className=='user'){
+    function handleClick(event) {
+        if(event.target.className=='user') {
             let username = event.target.innerText;
             let contentInput = document.querySelector("#content");
-            contentInput.value =`@${username}`;
+            contentInput.value = `@${username}`;
+        }else if(/(^| )btnDelete($| )/.test(event.target.className)){
+            let id = event.target.dataset.id;
+            socket.emit('delete',id);
         }
     }
     // 获得所有的消息
     socket.on('allMessages',function (messages) {
         messages = messages.map(message=>(
-            `<li class="list-group-item">${formatMsg(message)}</li>`
+            `<li class="list-group-item" id="${message._id}">${formatMsg(message)}</li>`
         ));
         let html = messages.join('');
         let messagesUl = document.querySelector('#messages');
         messagesUl.innerHTML=html;
+    });
+    // 加入房间
+    function joinRoom(roomName) {
+        // 告诉服务器进入的某个房间
+        socket.emit('join',roomName);
+    }
+    socket.on('deleted',function (id) {
+        let li = document.getElementById(id);
+        li.parentNode.removeChild(li);
     })
 </script>
 </body>

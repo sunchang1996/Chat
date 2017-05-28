@@ -16,11 +16,13 @@ app.get('/',function (req, res) {
 let server = require('http').createServer(app);
 // 创建一个IO，并且把server作为参数传入进来
 let io = require('socket.io')(server);
-
-//
+// 监听客户端的连接，当连接到来的时候执行对应的回调函数
+//socket 对象是每个客户端会专属有一个
+//存放着每个客户端的用户名 和 socket对象对应关系
 let sockets= {};
 io.on('connection',function (socket) {
     let username;
+    let currentRoom; //当前的房间名
     // 当服务器端接收到客户端的消息之后执行回调函数 msg就是对应的消息
     socket.on('message',function (msg) {
         // 广播给所有人
@@ -36,7 +38,13 @@ io.on('connection',function (socket) {
                 sockets[toUser].send({username,content,createAt:new Date().toLocaleString()})
             }else {
                 Message.create({username,content:msg},function (err, message) {
-                io.emit('message',message)
+                    if (currentRoom){
+                        //房间内接收
+                        io.in(currentRoom).emit('message',message);
+                    }else {
+                        // 全局接收
+                        io.emit('message',message)
+                    }
                 })
             }
         }else {
@@ -54,6 +62,21 @@ io.on('connection',function (socket) {
 
             socket.emit('allMessages',messages);
 
+        })
+    });
+    // 监听客户端想加入的房间事件
+    socket.on('join',function (roomName) {
+        if(currentRoom){// 如果此客户端原来在某个房间内，则让他离开那个房间
+            socket.leave(currentRoom);
+        }
+        // 让socket 进入对应的房间
+        socket.join(roomName);
+        currentRoom = roomName ;
+    });
+    // 监听客户端想要删除某个消息的事件
+    socket.on('delete',function (id) {
+        Message.remove({_id:id},function (err, result) {
+            io.emit('deleted',id);
         })
     })
 });
