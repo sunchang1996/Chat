@@ -3,6 +3,7 @@
  */
 let express = require('express');
 let path = require('path');
+let Message = require('./model').Message;
 // express 是一个函数，调用后会返回一个HTTP的监听函数
 let app = express();
 // 把node_modules 作为静态文件根目录
@@ -22,7 +23,7 @@ io.on('connection',function (socket) {
     // 当服务器端接收到客户端的消息之后执行回调函数 msg就是对应的消息
     socket.on('message',function (msg) {
         // 广播给所有人
-        if(username){
+        if(username){ // 如果已经赋值过了
             let reg = /@([^\s]+) (.+)/;
             let result =  msg.match(reg);
             if(result){ // 私聊
@@ -30,10 +31,12 @@ io.on('connection',function (socket) {
                 let toUser = result[1];
                 // 得到内容
                 let content = result[2];
-                socket[toUser].send({username,content,createAt:new Date().toLocaleString()})
+                socket.send({username,content,createAt:new Date().toLocaleString()});
                 sockets[toUser].send({username,content,createAt:new Date().toLocaleString()})
             }else {
-                 io.emit('message',{username,content:msg,createAt:new Date().toLocaleString()})
+                Message.create({username,content:msg},function (err, message) {
+                io.emit('message',message)
+                })
             }
         }else {
             username= msg ;
@@ -42,6 +45,7 @@ io.on('connection',function (socket) {
             io.emit('message',{username:'系统',content:`欢迎${username}来到聊天室`,createAt:new Date().toLocaleString()});
         }
     })
+    socket.on('getAllMessages')
 });
 
 server.listen(8080);

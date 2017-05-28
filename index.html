@@ -58,6 +58,10 @@
     socket.on('connect',function () {//监听连接成功事件
         console.log('连接成功');
     });
+    socket.on('connect',function () {
+        // 获取所有的消息 message
+        socket.emit('getAllMessages');
+    })
     // 客户端监听服务器端的消息
     socket.on('message',function (msgObj) {
         let messagesUl= document.querySelector('#messages');
