@@ -16,6 +16,7 @@ app.get('/',function (req, res) {
 let server = require('http').createServer(app);
 // 创建一个IO，并且把server作为参数传入进来
 let io = require('socket.io')(server);
+
 //
 let sockets= {};
 io.on('connection',function (socket) {
@@ -44,8 +45,17 @@ io.on('connection',function (socket) {
             sockets[username] = socket;
             io.emit('message',{username:'系统',content:`欢迎${username}来到聊天室`,createAt:new Date().toLocaleString()});
         }
+    });
+    // 服务器监听到消息 客户端向获取最近的20条数据
+    socket.on('getAllMessages',function () {
+        // 查询出最近的20条数据并发给客户端
+        Message.find().sort({createAt:-1}).limit(20).exec(function (err, messages) {
+            messages.reverse();  // 显示的时候 还是要从旧往新显示
+
+            socket.emit('allMessages',messages);
+
+        })
     })
-    socket.on('getAllMessages')
 });
 
 server.listen(8080);

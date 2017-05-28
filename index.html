@@ -61,12 +61,15 @@
     socket.on('connect',function () {
         // 获取所有的消息 message
         socket.emit('getAllMessages');
-    })
+    });
+    function formatMsg(msgObj) {
+        return `<span class="user">${msgObj.username}</span>: ${msgObj.content} <span class="pull-right"> ${new Date(msgObj.createAt).toLocaleString()}</span>`
+    }
     // 客户端监听服务器端的消息
     socket.on('message',function (msgObj) {
         let messagesUl= document.querySelector('#messages');
         let li = document.createElement('li');
-        li.innerHTML=`<span class="user">${msgObj.username}</span>: ${msgObj.content} <span class="pull-right"> ${msgObj.createAt}</span>`;
+        li.innerHTML= formatMsg(msgObj);
         li.className='list-group-item';
         messagesUl.appendChild(li);
     });
@@ -84,8 +87,16 @@
             let contentInput = document.querySelector("#content");
             contentInput.value =`@${username}`;
         }
-
     }
+    // 获得所有的消息
+    socket.on('allMessages',function (messages) {
+        messages = messages.map(message=>(
+            `<li class="list-group-item">${formatMsg(message)}</li>`
+        ));
+        let html = messages.join('');
+        let messagesUl = document.querySelector('#messages');
+        messagesUl.innerHTML=html;
+    })
 </script>
 </body>
 </html>

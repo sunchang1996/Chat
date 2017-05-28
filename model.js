@@ -1,5 +1,6 @@
 // 操作数据库
 let mongoose = require('mongoose');
+mongoose.Promise=Promise;
 //1.连接数据库
 mongoose.connect('mongodb://localhost/Socket');
 
