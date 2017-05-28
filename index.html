@@ -7,6 +7,13 @@
     <title>socket.io</title>
     <link rel="stylesheet" href="/bootstrap/dist/css/bootstrap.css">
     <!--<link rel="stylesheet" href="../node_modules/bootstrap/dist/css/bootstrap.css">-->
+    <style>
+        .user{
+            font-weight: 700;
+            color: aqua;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
 <div class="container">
@@ -17,8 +24,8 @@
                     <h3 class="text-center">欢迎NBA聊天室</h3>
                 </div>
                 <div class="panel-body">
-                    <ul class="list-group" id="messages">
-                        <li class="list-group-item">小熊:今天很热</li>
+                    <ul class="list-group" id="messages" onclick="selectUser(event)">
+
                     </ul>
                 </div>
                 <div class="panel-footer">
@@ -55,7 +62,7 @@
     socket.on('message',function (msgObj) {
         let messagesUl= document.querySelector('#messages');
         let li = document.createElement('li');
-        li.innerHTML=`${msgObj.username}:${msgObj.content} <span class="pull-right">${msgObj.createAt}</span>`;
+        li.innerHTML=`<span class="user">${msgObj.username}</span>: ${msgObj.content} <span class="pull-right"> ${msgObj.createAt}</span>`;
         li.className='list-group-item';
         messagesUl.appendChild(li);
     });
@@ -66,6 +73,14 @@
         let content= contentInput.value;// 获取输入框的值
         socket.send(content);// 把消息发送给服务器
         contentInput.value = '';
+    }
+    function selectUser(event) {
+        if(event.target.className=='user'){
+            let username = event.target.innerText;
+            let contentInput = document.querySelector("#content");
+            contentInput.value =`@${username}`;
+        }
+
     }
 </script>
 </body>
