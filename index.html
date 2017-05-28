@@ -52,10 +52,10 @@
         console.log('连接成功');
     });
     // 客户端监听服务器端的消息
-    socket.on('message',function (msg) {
+    socket.on('message',function (msgObj) {
         let messagesUl= document.querySelector('#messages');
         let li = document.createElement('li');
-        li.innerHTML=msg;
+        li.innerHTML=`${msgObj.username}:${msgObj.content} <span class="pull-right">${msgObj.createAt}</span>`;
         li.className='list-group-item';
         messagesUl.appendChild(li);
     });
